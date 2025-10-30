@@ -38,12 +38,14 @@ class MyVideoCapture:
             - フレームの読み込みに失敗した場合（ret=False）、ループを終了する。
             - 終了時には最後にキャプチャした画像を `captured_img` に保持する。
         """
+        print("カメラを起動します。'q'キーを押して映像をキャプチャし、終了してください...")
         while True:
             # カメラ画像を１枚キャプチャする
             ret, frame = self.cap.read()
 
             # リターンコードがFalseなら終了
             if not ret:
+                print("エラー: カメラフレームが読み込めません。")
                 break
 
             # 加工するともとの画像が保存できないのでコピーを生成
@@ -66,7 +68,8 @@ class MyVideoCapture:
             # 次の画像を処理するまでに時間間隔（msec）を空ける
             # キーボードの'q'が押されたら終了
             if cv2.waitKey(self.DELAY) & 0xFF == ord('q'):
-                self.captured_img = frame
+                print("画像をキャプチャしました。")
+                self.captured_img = frame # 元の（反転・描画前の）画像を保存
                 break
 
     def get_img(self) -> np.ndarray | None:
@@ -88,8 +91,12 @@ class MyVideoCapture:
         """
         if self.captured_img is None:
             raise ValueError("キャプチャ画像が存在しません。run()を実行してから保存してください。")
-
+        
+        # 保存先ディレクトリの確認と作成
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
         cv2.imwrite(filepath, self.captured_img)
+        print(f"キャプチャ画像を {filepath} に保存しました。")
+
 
     def __del__(self) -> None:
         """終了処理。カメラリソースを解放し、OpenCVウィンドウを閉じる。"""
@@ -99,6 +106,8 @@ class MyVideoCapture:
 
 
 if __name__ == "__main__":
+    import os
     app = MyVideoCapture()
     app.run()
-    app.write_img()
+    if app.get_img() is not None:
+        app.write_img()
